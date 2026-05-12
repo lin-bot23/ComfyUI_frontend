@@ -72,7 +72,13 @@ const config: KnipConfig = {
     // Deprecated stub re-exporting from `@/extension-api`. Will be removed
     // once PKG2 (`@comfyorg/extension-api`) ships and downstream imports
     // migrate to the package path.
-    'src/types/extensionV2.ts'
+    'src/types/extensionV2.ts',
+    // Strangler-pattern v2 conversions of core extensions. Not yet wired
+    // into the bootstrap (registration lands in a follow-up PR alongside
+    // the v1→v2 cut-over). Tracked by I-EXT (#12144).
+    'src/extensions/core/noteNode.v2.ts',
+    'src/extensions/core/rerouteNode.v2.ts',
+    'src/extensions/core/slotDefaults.v2.ts'
   ],
   vite: {
     config: ['vite?(.*).config.mts']
