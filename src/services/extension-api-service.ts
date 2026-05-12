@@ -569,8 +569,9 @@ function createNodeHandle(nodeId: NodeEntityId): NodeHandle {
       ) {
         // TODO(#11939): replace with world.onSystemEvent once World interface gains it
         if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
           console.warn(
-            `[extension-api] node.on("${event}") is not yet wired — Phase B`
+            `[extension-api] node.on('${event}') is a Phase-A stub — handlers will not fire until the dispatch substrate lands (#11939).`
           )
         }
         dispatch({ type: 'SubscribeNodeEvent', nodeId, event, handler: fn })
