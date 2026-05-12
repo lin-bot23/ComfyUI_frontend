@@ -224,8 +224,13 @@ function createWidgetHandle(widgetId: WidgetEntityId): WidgetHandle {
     entityId: widgetId,
 
     get name() {
-      // Entity ID format: "widget:graphId:nodeId:name" — the name is the last segment.
-      // TODO(#11939): replace with a dedicated WidgetName component when available.
+      // TODO(#11939): TEMPORARY widget-name parse. Entity ID format is
+      // "widget:graphId:nodeId:name", so the trailing segment after the last
+      // ':' is the name. Replace with a dedicated WidgetNameComponent (or
+      // reuse WidgetComponentSchema.name) once that lands. The `as unknown as
+      // string` cast and the lastIndexOf(':') split should both go away then.
+      // If the id has no ':' (defensive — should not happen with the canonical
+      // format), fall back to the full id rather than an empty string.
       const raw = widgetId as unknown as string
       const lastColon = raw.lastIndexOf(':')
       return lastColon !== -1 ? raw.slice(lastColon + 1) : raw
