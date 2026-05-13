@@ -33,11 +33,11 @@ export type Size = [width: number, height: number]
 /**
  * LiteGraph node execution mode.
  *
- * - `'always'` — Always execute.
- * - `'never'` — Never execute (muted).
- * - `'bypass'` — Bypass (passthrough).
- * - `'once'` — Execute once.
- * - `'onTrigger'` — Execute on trigger.
+ * - `'always'` — Always execute (default).
+ * - `'never'` — Muted; node is skipped during execution.
+ * - `'bypass'` — Passthrough; inputs forwarded to outputs without running.
+ * - `'once'` — Execute once then mute.
+ * - `'onTrigger'` — Legacy trigger mode (reserved, do not use).
  */
 export type NodeMode = 'always' | 'never' | 'bypass' | 'once' | 'onTrigger'
 
