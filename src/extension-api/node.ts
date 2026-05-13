@@ -217,6 +217,22 @@ export interface NodeBeforeSerializeEvent {
   replace(fn: (orig: Record<string, unknown>) => Record<string, unknown>): void
 }
 
+// ─── DOM widget options ───────────────────────────────────────────────────────
+
+/**
+ * Options for `NodeHandle.addDOMWidget()`.
+ *
+ * @stability experimental
+ */
+export interface DOMWidgetOptions {
+  /** Unique widget name within this node. */
+  name: string
+  /** The DOM element to embed in the node widget area. */
+  element: HTMLElement
+  /** Reserved height in pixels. Defaults to `element.offsetHeight` at mount time. */
+  height?: number
+}
+
 // ─── NodeHandle ──────────────────────────────────────────────────────────────
 
 /**
@@ -243,23 +259,6 @@ export interface NodeBeforeSerializeEvent {
  * })
  * ```
  */
-
-// ─── DOM widget options ───────────────────────────────────────────────────────
-
-/**
- * Options for `NodeHandle.addDOMWidget()`.
- *
- * @stability experimental
- */
-export interface DOMWidgetOptions {
-  /** Unique widget name within this node. */
-  name: string
-  /** The DOM element to embed in the node widget area. */
-  element: HTMLElement
-  /** Reserved height in pixels. Defaults to `element.offsetHeight` at mount time. */
-  height?: number
-}
-
 export interface NodeHandle {
   // ── IDENTITY ──────────────────────────────────────────────────────────────
 
