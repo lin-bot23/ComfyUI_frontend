@@ -31,10 +31,12 @@ const MockFormDropdownMenu = {
     'showOwnershipFilter',
     'ownershipOptions',
     'showBaseModelFilter',
-    'baseModelOptions'
+    'baseModelOptions',
+    'candidateIndex'
   ],
-  template:
-    '<div class="mock-menu" data-testid="dropdown-menu" :data-items="JSON.stringify(items)" />'
+  template: `<div class="mock-menu" data-testid="dropdown-menu" :data-candidate-index="candidateIndex" :data-items="JSON.stringify(items)">
+      <button type="button" @click="$emit('search-enter')">Search enter</button>
+    </div>`
 }
 
 const MockFormDropdownInput = {
@@ -54,7 +56,9 @@ interface MountDropdownOptions {
     items: FormDropdownItem[],
     onCleanup: (cleanupFn: () => void) => void
   ) => Promise<FormDropdownItem[]>
+  multiple?: boolean | number
   searchQuery?: string
+  onUpdateSelected?: (selected: Set<string>) => void
 }
 
 function flushPromises() {
@@ -67,7 +71,13 @@ function mountDropdown(
 ) {
   const user = userEvent.setup()
   const result = render(FormDropdown, {
-    props: { items, ...options },
+    props: {
+      items,
+      multiple: options.multiple,
+      searcher: options.searcher,
+      searchQuery: options.searchQuery,
+      'onUpdate:selected': options.onUpdateSelected
+    },
     global: {
       plugins: [PrimeVue, i18n],
       stubs: {
@@ -83,6 +93,16 @@ function mountDropdown(
 function getMenuItems(): FormDropdownItem[] {
   const menuEl = screen.getByTestId('dropdown-menu')
   return JSON.parse(menuEl.getAttribute('data-items') ?? '[]')
+}
+
+function getCandidateIndex(): number {
+  const menuEl = screen.getByTestId('dropdown-menu')
+  return Number(menuEl.getAttribute('data-candidate-index'))
+}
+
+async function openDropdown(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Open' }))
+  await flushPromises()
 }
 
 describe('FormDropdown', () => {
@@ -174,17 +194,96 @@ describe('FormDropdown', () => {
         sourceItems.filter((item) => item.id === 'keep')
     )
 
-    const { container, user } = mountDropdown(
+    const { user } = mountDropdown(
       [createItem('keep', 'alpha'), createItem('drop', 'beta')],
       { searcher }
     )
     await flushPromises()
 
-    // eslint-disable-next-line testing-library/no-node-access
-    await user.click(container.querySelector('.mock-dropdown-trigger')!)
-    await flushPromises()
+    await openDropdown(user)
 
     expect(searcher).toHaveBeenCalled()
     expect(getMenuItems().map((item) => item.id)).toEqual(['keep'])
+  })
+
+  it('selects the top matching item when Enter is pressed in search', async () => {
+    const onUpdateSelected = vi.fn()
+    const { user } = mountDropdown(
+      [createItem('beta', 'beta.ckpt'), createItem('alpha', 'alpha.ckpt')],
+      { searchQuery: 'alp', onUpdateSelected }
+    )
+    await openDropdown(user)
+
+    await user.click(screen.getByRole('button', { name: 'Search enter' }))
+    await flushPromises()
+
+    expect(onUpdateSelected).toHaveBeenCalledWith(new Set(['alpha']))
+  })
+
+  it('does not treat closed full-list items as current search results', async () => {
+    const onUpdateSelected = vi.fn()
+    const { user } = mountDropdown(
+      [createItem('beta', 'beta.ckpt'), createItem('alpha', 'alpha.ckpt')],
+      { searchQuery: 'alp', onUpdateSelected }
+    )
+    await flushPromises()
+
+    expect(getCandidateIndex()).toBe(-1)
+
+    await user.click(screen.getByRole('button', { name: 'Search enter' }))
+    await flushPromises()
+
+    expect(onUpdateSelected).not.toHaveBeenCalled()
+  })
+
+  it('syncs displayed results before selecting the top search result', async () => {
+    const onUpdateSelected = vi.fn()
+    const searcher = vi.fn(
+      async (query: string, sourceItems: FormDropdownItem[]) => {
+        if (query.trim() === '') return sourceItems
+        return sourceItems.filter((item) => item.name.includes(query))
+      }
+    )
+
+    const items = [
+      createItem('beta', 'beta.ckpt'),
+      createItem('alpha', 'alpha.ckpt')
+    ]
+    const { rerender, user } = mountDropdown(items, {
+      searcher,
+      onUpdateSelected
+    })
+    await openDropdown(user)
+
+    await rerender({
+      items,
+      searcher,
+      searchQuery: 'alp',
+      'onUpdate:selected': onUpdateSelected
+    })
+
+    expect(getCandidateIndex()).toBe(-1)
+
+    await user.click(screen.getByRole('button', { name: 'Search enter' }))
+    await flushPromises()
+
+    expect(onUpdateSelected).toHaveBeenCalledWith(new Set(['alpha']))
+    expect(searcher).toHaveBeenCalledWith('alp', items, expect.any(Function))
+  })
+
+  it('does not select a search result from multi-select dropdowns', async () => {
+    const onUpdateSelected = vi.fn()
+    const { user } = mountDropdown(
+      [createItem('beta', 'beta.ckpt'), createItem('alpha', 'alpha.ckpt')],
+      { multiple: true, searchQuery: 'alp', onUpdateSelected }
+    )
+    await openDropdown(user)
+
+    expect(getCandidateIndex()).toBe(-1)
+
+    await user.click(screen.getByRole('button', { name: 'Search enter' }))
+    await flushPromises()
+
+    expect(onUpdateSelected).not.toHaveBeenCalled()
   })
 })

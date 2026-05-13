@@ -6,6 +6,14 @@ export default {
   extends: Select,
   emits: ['hide'],
   methods: {
+    onFilterChange(event) {
+      Select.methods.onFilterChange.call(this, event)
+      if (event.isComposing) return
+
+      const optionIndex = this.findFirstOptionIndex()
+      this.focusedOptionIndex = optionIndex
+      this.scrollInView(optionIndex)
+    },
     onOverlayLeave() {
       this.unbindOutsideClickListener()
       this.unbindScrollListener()

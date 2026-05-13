@@ -23,6 +23,9 @@ defineProps<{
   showBaseModelFilter?: boolean
   baseModelOptions?: FilterOption[]
 }>()
+const emit = defineEmits<{
+  (e: 'search-enter'): void
+}>()
 
 const layoutMode = defineModel<LayoutMode>('layoutMode')
 const searchQuery = defineModel<string>('searchQuery')
@@ -95,6 +98,11 @@ function toggleBaseModelSelection(item: FilterOption) {
     ? new Set([...current].filter((v) => v !== item.value))
     : new Set([...current, item.value])
 }
+
+function handleSearchEnter(event: KeyboardEvent) {
+  event.preventDefault()
+  emit('search-enter')
+}
 </script>
 
 <template>
@@ -109,6 +117,7 @@ function toggleBaseModelSelection(item: FilterOption) {
           'focus-within:ring-0 focus-within:outline-component-node-widget-background-highlighted/80'
         )
       "
+      @enter="handleSearchEnter"
     />
 
     <Button
